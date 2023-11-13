@@ -215,6 +215,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setSong() {
+        getAudioFiles();
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
