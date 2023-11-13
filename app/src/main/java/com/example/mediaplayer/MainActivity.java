@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private AdapterSong adapterSong;
     private LinearLayoutManager linearLayoutManager;
     private double currentPosition, totalDuration;
+    private int songIndex = 0;
 
     private void init() {
         rvSongs = findViewById(R.id.rv_songs);
@@ -66,7 +67,8 @@ public class MainActivity extends AppCompatActivity {
                     100
             );
         } else {
-            Toast.makeText(this, "Permission already granted", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this, "Permission already granted", Toast.LENGTH_SHORT).show();
+            setSong();
         }
     }
 
@@ -149,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
             btnPlay.setImageResource(R.drawable.ic_pause_48_w);
             tvSongTitle.setText(songArrayList.get(position).getSongTitle());
+            songIndex = position;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -200,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
         return songDuration;
     }
 
-    private void pause() {
+    private void pauseSong() {
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -215,9 +218,78 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void previousSong() {
+        btnPrevious.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (songIndex > 0) {
+                    songIndex--;
+                } else {
+                    songIndex = songArrayList.size() - 1;
+                }
+
+                playSong(songIndex);
+            }
+        });
+    }
+
+    private void nextSong() {
+        btnNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (songIndex < songArrayList.size() - 1) {
+                    songIndex++;
+                } else {
+                    songIndex = 0;
+                }
+
+                playSong(songIndex);
+            }
+        });
+    }
+
     private void setSong() {
         getAudioFiles();
+        managerRv();
 
+        sbPosition.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                currentPosition = seekBar.getProgress();
+                mediaPlayer.seekTo((int) currentPosition);
+                mediaPlayer.start();
+            }
+        });
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                songIndex++;
+
+                if (songIndex >= songArrayList.size()) {
+                    songIndex = 0;
+                }
+
+                playSong(songIndex);
+            }
+        });
+
+        if (!songArrayList.isEmpty()) {
+            playSong(songIndex);
+            pauseSong();
+            previousSong();
+            nextSong();
+        }
     }
 
     @Override
@@ -229,8 +301,26 @@ public class MainActivity extends AppCompatActivity {
 
         checkPermission();
 
-        getAudioFiles();
+//        getAudioFiles();
 
-        managerRv();
+//        managerRv();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+        }
     }
 }
